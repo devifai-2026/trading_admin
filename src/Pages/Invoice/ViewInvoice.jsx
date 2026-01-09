@@ -15,7 +15,8 @@ import {
   Edit,
   Send,
   DollarSign,
-  Package as PackageIcon
+  Package as PackageIcon,
+  IndianRupee
 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -43,13 +44,13 @@ const mockInvoices = {
       taxId: 'TAX-123456'
     },
     items: [
-      { id: 1, description: 'Enterprise Plan - Monthly Subscription', quantity: 1, price: 99.99, taxRate: 8 },
-      { id: 2, description: 'Additional Storage (50GB)', quantity: 2, price: 10.00, taxRate: 8 },
-      { id: 3, description: 'Priority Support Add-on', quantity: 1, price: 29.99, taxRate: 8 }
+      { id: 1, description: 'Enterprise Plan - Monthly Subscription', quantity: 1, price: 8299.99, taxRate: 18 },
+      { id: 2, description: 'Additional Storage (50GB)', quantity: 2, price: 1000.00, taxRate: 18 },
+      { id: 3, description: 'Priority Support Add-on', quantity: 1, price: 2999.99, taxRate: 18 }
     ],
-    subtotal: 149.98,
-    tax: 12.00,
-    total: 161.98,
+    subtotal: 12299.98,
+    tax: 2213.99,
+    total: 14513.97,
     status: 'Paid',
     paymentMethod: 'Credit Card (•••• 4242)',
     paymentDate: '2024-01-16',
@@ -79,12 +80,12 @@ const mockInvoices = {
       taxId: 'TAX-123456'
     },
     items: [
-      { id: 1, description: 'Pro Plan - Monthly Subscription', quantity: 1, price: 29.99, taxRate: 8 },
-      { id: 2, description: 'Custom Domain Registration', quantity: 1, price: 15.00, taxRate: 8 }
+      { id: 1, description: 'Pro Plan - Monthly Subscription', quantity: 1, price: 2499.99, taxRate: 18 },
+      { id: 2, description: 'Custom Domain Registration', quantity: 1, price: 1500.00, taxRate: 18 }
     ],
-    subtotal: 44.99,
-    tax: 3.60,
-    total: 48.59,
+    subtotal: 3999.99,
+    tax: 719.99,
+    total: 4719.98,
     status: 'Pending',
     paymentMethod: 'PayPal',
     paymentDate: '',
@@ -177,9 +178,9 @@ const ViewInvoice = () => {
               <tr style="border-bottom: 1px solid #e5e7eb;">
                 <td style="padding: 12px; font-size: 14px;">${item.description}</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; font-size: 14px;">$${item.price.toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right; font-size: 14px;">₹${item.price.toFixed(2)}</td>
                 <td style="padding: 12px; text-align: right; font-size: 14px;">${item.taxRate}%</td>
-                <td style="padding: 12px; text-align: right; font-size: 14px;">$${(item.quantity * item.price).toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right; font-size: 14px;">₹${(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -188,15 +189,15 @@ const ViewInvoice = () => {
         <div style="margin-left: auto; width: 300px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
             <span>Subtotal:</span>
-            <span>$${invoice.subtotal.toFixed(2)}</span>
+            <span>₹${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
-            <span>Tax (8%):</span>
-            <span>$${invoice.tax.toFixed(2)}</span>
+            <span>Tax (${invoice.items[0]?.taxRate || 18}%):</span>
+            <span>₹${invoice.tax.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 16px; border-top: 2px solid #4f46e5; padding-top: 10px;">
             <span>TOTAL:</span>
-            <span>$${invoice.total.toFixed(2)}</span>
+            <span>₹${invoice.total.toFixed(2)}</span>
           </div>
         </div>
         
@@ -373,9 +374,9 @@ const ViewInvoice = () => {
               <tr>
                 <td>${item.description}</td>
                 <td style="text-align: center;">${item.quantity}</td>
-                <td style="text-align: right;">$${item.price.toFixed(2)}</td>
+                <td style="text-align: right;">₹${item.price.toFixed(2)}</td>
                 <td style="text-align: right;">${item.taxRate}%</td>
-                <td style="text-align: right;">$${(item.quantity * item.price).toFixed(2)}</td>
+                <td style="text-align: right;">₹${(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -384,15 +385,15 @@ const ViewInvoice = () => {
         <div class="total-section">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
             <span>Subtotal:</span>
-            <span>$${invoice.subtotal.toFixed(2)}</span>
+            <span>₹${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px;">
-            <span>Tax (8%):</span>
-            <span>$${invoice.tax.toFixed(2)}</span>
+            <span>Tax (${invoice.items[0]?.taxRate || 18}%):</span>
+            <span>₹${invoice.tax.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 16px; border-top: 2px solid #4f46e5; padding-top: 10px;">
             <span>TOTAL:</span>
-            <span>$${invoice.total.toFixed(2)}</span>
+            <span>₹${invoice.total.toFixed(2)}</span>
           </div>
         </div>
         
@@ -437,7 +438,7 @@ const ViewInvoice = () => {
 
   const handleSendEmail = () => {
     const subject = `Invoice ${invoice.invoiceNumber} from ${invoice.company.name}`
-    const body = `Dear ${invoice.customer.name},\n\nPlease find attached invoice ${invoice.invoiceNumber} dated ${invoice.date} for the amount of $${invoice.total.toFixed(2)}.\n\nYou can also view this invoice online or download a PDF copy.\n\nThank you for your business!\n\nBest regards,\n${invoice.company.name}`
+    const body = `Dear ${invoice.customer.name},\n\nPlease find attached invoice ${invoice.invoiceNumber} dated ${invoice.date} for the amount of ₹${invoice.total.toFixed(2)}.\n\nYou can also view this invoice online or download a PDF copy.\n\nThank you for your business!\n\nBest regards,\n${invoice.company.name}`
     
     window.location.href = `mailto:${invoice.customer.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
@@ -596,7 +597,7 @@ const ViewInvoice = () => {
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Total Amount</p>
-              <p className="text-2xl font-bold text-gray-900">${invoice.total.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-gray-900">₹{invoice.total.toFixed(2)}</p>
             </div>
           </div>
 
@@ -629,14 +630,14 @@ const ViewInvoice = () => {
                         <div className="text-sm text-gray-900">{item.quantity}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">${item.price.toFixed(2)}</div>
+                        <div className="text-sm text-gray-900">₹{item.price.toFixed(2)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{item.taxRate}%</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
-                          ${(item.quantity * item.price).toFixed(2)}
+                          ₹{(item.quantity * item.price).toFixed(2)}
                         </div>
                       </td>
                     </tr>
@@ -654,16 +655,16 @@ const ViewInvoice = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">${invoice.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">₹{invoice.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tax:</span>
-                    <span className="font-medium">${invoice.tax.toFixed(2)}</span>
+                    <span className="text-gray-600">Tax (18%):</span>
+                    <span className="font-medium">₹{invoice.tax.toFixed(2)}</span>
                   </div>
                   <div className="pt-3 border-t border-gray-200">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-semibold text-gray-900">Total:</span>
-                      <span className="text-2xl font-bold text-indigo-600">${invoice.total.toFixed(2)}</span>
+                      <span className="text-2xl font-bold text-indigo-600">₹{invoice.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -718,7 +719,7 @@ const ViewInvoice = () => {
               {invoice.paymentDate && (
                 <div className="flex items-center">
                   <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
-                    <DollarSign className="h-5 w-5 text-purple-600" />
+                    <IndianRupee className="h-5 w-5 text-purple-600" />
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-900">Payment Received</p>

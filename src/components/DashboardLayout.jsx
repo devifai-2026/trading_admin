@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { 
   LayoutDashboard, 
@@ -10,18 +10,27 @@ import {
   X,
   Search,
   Bell,
-  UserCircle
+  UserCircle,
+  LogOut,
+  BookOpen  // Added BookOpen icon
 } from 'lucide-react'
 
-const DashboardLayout = () => {
+const DashboardLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const navigate = useNavigate()
 
   const navigation = [
-  { name: 'Blog', href: '/blog', icon: FileText },
-  { name: 'Package', href: '/package', icon: Package },
-  { name: 'User', href: '/user', icon: Users },
-  { name: 'Invoice', href: '/invoice', icon: Receipt },
-]
+    { name: 'Blog', href: '/blog', icon: FileText },
+    { name: 'Package', href: '/package', icon: Package },
+    { name: 'User', href: '/user', icon: Users },
+    { name: 'Invoice', href: '/invoice', icon: Receipt },
+    { name: 'Course', href: '/course', icon: BookOpen }, // Changed from Receipt to BookOpen
+  ]
+
+  const handleLogout = () => {
+    onLogout()
+    navigate('/login')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -68,6 +77,15 @@ const DashboardLayout = () => {
                     <p className="text-sm font-medium text-gray-700">Admin User</p>
                     <p className="text-xs text-gray-500">admin@example.com</p>
                   </div>
+                  
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleLogout}
+                    className="ml-2 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    title="Logout"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
             </div>

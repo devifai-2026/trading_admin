@@ -16,7 +16,8 @@ import {
   CheckCircle,
   XCircle,
   Edit,
-  Download
+  Download,
+  IndianRupee
 } from 'lucide-react'
 
 // Mock data for users
@@ -32,7 +33,7 @@ const mockUsers = {
     lastLogin: '2024-02-20 14:30:00',
     package: {
       name: 'Enterprise',
-      price: '$99.99/month',
+      price: '₹8,299/month',
       features: [
         'Unlimited Users',
         '500GB Storage',
@@ -69,7 +70,7 @@ const mockUsers = {
     lastLogin: '2024-02-19 09:15:00',
     package: {
       name: 'Pro Plan',
-      price: '$29.99/month',
+      price: '₹2,499/month',
       features: [
         'Up to 20 Users',
         '50GB Storage',
@@ -105,7 +106,7 @@ const mockUsers = {
     lastLogin: '2024-02-01 16:45:00',
     package: {
       name: 'Basic Plan',
-      price: '$9.99/month',
+      price: '₹799/month',
       features: [
         'Up to 5 Users',
         '10GB Storage',
@@ -497,7 +498,7 @@ const UserDetails = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Total Spent:</span>
-                <span className="text-sm font-medium">$599.94</span>
+                <span className="text-sm font-medium">₹49,799.64</span>
               </div>
               <div className="pt-4 border-t border-gray-200">
                 <button className="w-full text-indigo-600 hover:text-indigo-800 text-sm font-medium">

@@ -29,7 +29,7 @@ const mockUsers = {
     lastLogin: '2024-02-20 14:30:00',
     package: {
       name: 'Enterprise',
-      price: '$99.99/month',
+      price: '₹8,299/month',
       features: [
         'Unlimited Users',
         '500GB Storage',
@@ -66,7 +66,7 @@ const mockUsers = {
     lastLogin: '2024-02-19 09:15:00',
     package: {
       name: 'Pro Plan',
-      price: '$29.99/month',
+      price: '₹2,499/month',
       features: [
         'Up to 20 Users',
         '50GB Storage',
@@ -102,7 +102,7 @@ const mockUsers = {
     lastLogin: '2024-02-01 16:45:00',
     package: {
       name: 'Basic Plan',
-      price: '$9.99/month',
+      price: '₹799/month',
       features: [
         'Up to 5 Users',
         '10GB Storage',
@@ -230,7 +230,7 @@ const EditUser = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-[95%] mx-auto">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -485,9 +485,9 @@ const EditUser = () => {
                     className="w-full border border-gray-300 rounded-lg p-3"
                     {...register('package', { required: 'Package is required' })}
                   >
-                    <option value="Enterprise">Enterprise - $99.99/month</option>
-                    <option value="Pro Plan">Pro Plan - $29.99/month</option>
-                    <option value="Basic Plan">Basic Plan - $9.99/month</option>
+                    <option value="Enterprise">Enterprise - ₹8,299/month</option>
+                    <option value="Pro Plan">Pro Plan - ₹2,499/month</option>
+                    <option value="Basic Plan">Basic Plan - ₹799/month</option>
                   </select>
                 </div>
               </div>

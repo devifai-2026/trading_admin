@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Download, Eye, Printer, Plus, Search, Filter, Calendar, FileText, Mail, Phone } from 'lucide-react'
+import { Download, Eye, Printer, Plus, Search, Filter, Calendar, FileText, Mail, Phone, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -17,12 +17,12 @@ const initialInvoices = [
       address: '123 Main St, New York, NY 10001'
     },
     items: [
-      { description: 'Enterprise Plan - Monthly', quantity: 1, price: 99.99 },
-      { description: 'Additional Storage (50GB)', quantity: 2, price: 10.00 }
+      { description: 'Enterprise Plan - Monthly', quantity: 1, price: 8299 },
+      { description: 'Additional Storage (50GB)', quantity: 2, price: 499 }
     ],
-    subtotal: 119.99,
-    tax: 9.60,
-    total: 129.59,
+    subtotal: 9297,
+    tax: 929.70,
+    total: 10226.70,
     status: 'Paid',
     paymentMethod: 'Credit Card',
     notes: 'Thank you for your business!'
@@ -38,11 +38,11 @@ const initialInvoices = [
       address: '456 Oak Ave, San Francisco, CA 94107'
     },
     items: [
-      { description: 'Pro Plan - Monthly', quantity: 1, price: 29.99 }
+      { description: 'Pro Plan - Monthly', quantity: 1, price: 2499 }
     ],
-    subtotal: 29.99,
-    tax: 2.40,
-    total: 32.39,
+    subtotal: 2499,
+    tax: 249.90,
+    total: 2748.90,
     status: 'Pending',
     paymentMethod: 'PayPal',
     notes: 'Please make payment within 30 days'
@@ -58,13 +58,13 @@ const initialInvoices = [
       address: '789 Corporate Blvd, Chicago, IL 60601'
     },
     items: [
-      { description: 'Enterprise Plan - Yearly', quantity: 1, price: 999.99 },
-      { description: 'Premium Support', quantity: 1, price: 199.99 },
-      { description: 'Custom Domain', quantity: 2, price: 25.00 }
+      { description: 'Enterprise Plan - Yearly', quantity: 1, price: 82990 },
+      { description: 'Premium Support', quantity: 1, price: 9999 },
+      { description: 'Custom Domain', quantity: 2, price: 1199 }
     ],
-    subtotal: 1249.98,
-    tax: 100.00,
-    total: 1349.98,
+    subtotal: 95387,
+    tax: 9538.70,
+    total: 104925.70,
     status: 'Paid',
     paymentMethod: 'Bank Transfer',
     notes: 'Corporate discount applied'
@@ -80,12 +80,12 @@ const initialInvoices = [
       address: '321 Tech Park, Austin, TX 78701'
     },
     items: [
-      { description: 'Pro Plan - Yearly', quantity: 1, price: 299.99 },
-      { description: 'Additional Users (5)', quantity: 1, price: 49.99 }
+      { description: 'Pro Plan - Yearly', quantity: 1, price: 24990 },
+      { description: 'Additional Users (5)', quantity: 1, price: 2499 }
     ],
-    subtotal: 349.98,
-    tax: 28.00,
-    total: 377.98,
+    subtotal: 27489,
+    tax: 2748.90,
+    total: 30237.90,
     status: 'Overdue',
     paymentMethod: 'Credit Card',
     notes: 'Payment reminder sent'
@@ -101,16 +101,31 @@ const initialInvoices = [
       address: '654 Design Blvd, Miami, FL 33101'
     },
     items: [
-      { description: 'Basic Plan - Monthly', quantity: 3, price: 9.99 }
+      { description: 'Basic Plan - Monthly', quantity: 3, price: 799 }
     ],
-    subtotal: 29.97,
-    tax: 2.40,
-    total: 32.37,
+    subtotal: 2397,
+    tax: 239.70,
+    total: 2636.70,
     status: 'Draft',
     paymentMethod: '',
     notes: 'Invoice in draft mode'
   },
 ]
+
+// Helper function to format numbers as Indian currency
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount)
+}
+
+// Helper function to get rupee symbol
+const getRupeeSymbol = () => {
+  return '₹'
+}
 
 const Invoice = () => {
   const [invoices, setInvoices] = useState(initialInvoices)
@@ -118,6 +133,8 @@ const Invoice = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterDate, setFilterDate] = useState('all')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [invoiceToDelete, setInvoiceToDelete] = useState(null)
 
   // Calculate stats
   const stats = {
@@ -173,6 +190,28 @@ const Invoice = () => {
     setFilteredInvoices(result)
   }, [searchTerm, filterStatus, filterDate, invoices])
 
+  // Handle delete click
+  const handleDeleteClick = (invoice) => {
+    setInvoiceToDelete(invoice)
+    setShowDeleteModal(true)
+  }
+
+  // Confirm delete
+  const confirmDelete = () => {
+    if (invoiceToDelete) {
+      setInvoices(invoices.filter(inv => inv.id !== invoiceToDelete.id))
+      console.log('Deleted invoice:', invoiceToDelete.id)
+    }
+    setShowDeleteModal(false)
+    setInvoiceToDelete(null)
+  }
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setShowDeleteModal(false)
+    setInvoiceToDelete(null)
+  }
+
   // Handle download as PDF
   const handleDownloadPDF = (invoice) => {
     // Create a temporary div for the invoice
@@ -223,8 +262,8 @@ const Invoice = () => {
               <tr>
                 <td style="padding: 12px; border: 1px solid #d1d5db;">${item.description}</td>
                 <td style="padding: 12px; text-align: center; border: 1px solid #d1d5db;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">$${item.price.toFixed(2)}</td>
-                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">$${(item.quantity * item.price).toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${item.price.toFixed(2)}</td>
+                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -233,15 +272,15 @@ const Invoice = () => {
         <div style="margin-left: auto; width: 300px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Subtotal:</span>
-            <span>$${invoice.subtotal.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Tax:</span>
-            <span>$${invoice.tax.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.tax.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px;">
             <span>Total:</span>
-            <span>$${invoice.total.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.total.toFixed(2)}</span>
           </div>
           <div style="padding: 10px; background-color: ${invoice.status === 'Paid' ? '#d1fae5' : 
           invoice.status === 'Pending' ? '#fef3c7' : 
@@ -356,8 +395,8 @@ const Invoice = () => {
               <tr>
                 <td>${item.description}</td>
                 <td style="text-align: center;">${item.quantity}</td>
-                <td style="text-align: right;">$${item.price.toFixed(2)}</td>
-                <td style="text-align: right;">$${(item.quantity * item.price).toFixed(2)}</td>
+                <td style="text-align: right;">${getRupeeSymbol()}${item.price.toFixed(2)}</td>
+                <td style="text-align: right;">${getRupeeSymbol()}${(item.quantity * item.price).toFixed(2)}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -366,15 +405,15 @@ const Invoice = () => {
         <div class="total-section">
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Subtotal:</span>
-            <span>$${invoice.subtotal.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.subtotal.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
             <span>Tax:</span>
-            <span>$${invoice.tax.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.tax.toFixed(2)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px;">
             <span>Total:</span>
-            <span>$${invoice.total.toFixed(2)}</span>
+            <span>${getRupeeSymbol()}${invoice.total.toFixed(2)}</span>
           </div>
           <div class="status ${invoice.status.toLowerCase()}">
             <strong>Status: ${invoice.status}</strong>
@@ -396,15 +435,56 @@ const Invoice = () => {
     printWindow.document.close()
   }
 
-  // Handle delete
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this invoice?')) {
-      setInvoices(invoices.filter(invoice => invoice.id !== id))
-    }
-  }
-
   return (
     <div className="space-y-6">
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                  <Trash2 className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Delete Invoice</h3>
+                  <p className="text-gray-600">This action cannot be undone.</p>
+                </div>
+              </div>
+              
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p className="text-red-700 font-medium mb-1">Are you sure you want to delete?</p>
+                <p className="text-red-600">
+                  Invoice: <span className="font-semibold">{invoiceToDelete?.id}</span>
+                </p>
+                <p className="text-red-600 text-sm mt-1">
+                  Customer: {invoiceToDelete?.customer.name}
+                </p>
+                <p className="text-red-600 text-sm">
+                  Amount: {formatCurrency(invoiceToDelete?.total || 0)}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Invoice
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
@@ -455,7 +535,7 @@ const Invoice = () => {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-gray-500">Total Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">${stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalRevenue)}</p>
             </div>
             <div className="bg-purple-100 p-2 rounded-full">
               <FileText className="h-6 w-6 text-purple-600" />
@@ -545,7 +625,7 @@ const Invoice = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50">
+                <tr key={invoice.id} className="hover:bg-gray-50 group">
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{invoice.id}</div>
                     <div className="text-sm text-gray-500">{invoice.paymentMethod}</div>
@@ -565,9 +645,9 @@ const Invoice = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="font-medium">${invoice.total.toFixed(2)}</div>
+                    <div className="font-medium">{formatCurrency(invoice.total)}</div>
                     <div className="text-sm text-gray-500">
-                      ${invoice.subtotal.toFixed(2)} + ${invoice.tax.toFixed(2)} tax
+                      {formatCurrency(invoice.subtotal)} + {formatCurrency(invoice.tax)} tax
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -602,6 +682,13 @@ const Invoice = () => {
                         title="Print"
                       >
                         <Printer className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(invoice)}
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   </td>

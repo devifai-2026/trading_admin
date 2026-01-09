@@ -9,14 +9,15 @@ import {
   Mail, 
   Phone, 
   MapPin,
-  Calendar
+  Calendar,
+  IndianRupee
 } from 'lucide-react'
 
 const CreateInvoice = () => {
   const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors } } = useForm()
   const [items, setItems] = useState([
-    { id: 1, description: '', quantity: 1, price: 0, taxRate: 8 }
+    { id: 1, description: '', quantity: 1, price: 0, taxRate: 18 } // Default tax rate 18% for India
   ])
 
   const addItem = () => {
@@ -25,7 +26,7 @@ const CreateInvoice = () => {
       description: '', 
       quantity: 1, 
       price: 0, 
-      taxRate: 8 
+      taxRate: 18 
     }])
   }
 
@@ -51,17 +52,30 @@ const CreateInvoice = () => {
     return { subtotal, tax, total: subtotal + tax }
   }
 
+  // Format currency in Indian Rupees
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount)
+  }
+
   const totals = calculateTotals()
 
   const onSubmit = (data) => {
     const newInvoice = {
       id: `INV-${Date.now().toString().slice(-6)}`,
       ...data,
-      items: items,
+      items: items.map(item => ({
+        ...item,
+        total: item.quantity * item.price
+      })),
       ...totals,
       status: 'Draft',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0]
     }
     
     console.log('New invoice created:', newInvoice)
@@ -96,7 +110,7 @@ const CreateInvoice = () => {
                   </label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="John Doe"
                     {...register('customerName', { required: 'Customer name is required' })}
                   />
@@ -107,7 +121,7 @@ const CreateInvoice = () => {
                   </label>
                   <input
                     type="email"
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="john@example.com"
                     {...register('customerEmail', { required: 'Email is required' })}
                   />
@@ -118,8 +132,8 @@ const CreateInvoice = () => {
                   </label>
                   <input
                     type="tel"
-                    className="w-full border border-gray-300 rounded-lg p-3"
-                    placeholder="+1 234 567 890"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="+91 98765 43210"
                     {...register('customerPhone')}
                   />
                 </div>
@@ -129,8 +143,8 @@ const CreateInvoice = () => {
                   </label>
                   <textarea
                     rows={2}
-                    className="w-full border border-gray-300 rounded-lg p-3"
-                    placeholder="123 Main St, City, State ZIP"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="123 Main St, City, State, PIN Code"
                     {...register('customerAddress')}
                   />
                 </div>
@@ -160,7 +174,7 @@ const CreateInvoice = () => {
                       </label>
                       <input
                         type="text"
-                        className="w-full border border-gray-300 rounded-lg p-2"
+                        className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Item description"
                         value={item.description}
                         onChange={(e) => updateItem(item.id, 'description', e.target.value)}
@@ -173,34 +187,37 @@ const CreateInvoice = () => {
                       <input
                         type="number"
                         min="1"
-                        className="w-full border border-gray-300 rounded-lg p-2"
+                        className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
                       />
                     </div>
                     <div className="w-32">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Price
+                        Price (₹)
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="w-full border border-gray-300 rounded-lg p-2"
-                        value={item.price}
-                        onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
-                      />
+                      <div className="relative">
+                        <IndianRupee className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="w-full pl-8 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          value={item.price}
+                          onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
                     </div>
                     <div className="w-32">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tax Rate (%)
+                        GST (%)
                       </label>
                       <input
                         type="number"
                         step="0.1"
                         min="0"
-                        max="100"
-                        className="w-full border border-gray-300 rounded-lg p-2"
+                        max="28"
+                        className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         value={item.taxRate}
                         onChange={(e) => updateItem(item.id, 'taxRate', parseFloat(e.target.value) || 0)}
                       />
@@ -209,7 +226,7 @@ const CreateInvoice = () => {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="p-2 text-red-600 hover:text-red-800"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
                         disabled={items.length <= 1}
                       >
                         <Trash2 className="h-5 w-5" />
@@ -230,7 +247,7 @@ const CreateInvoice = () => {
                   </label>
                   <textarea
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Additional notes for the customer"
                     {...register('notes')}
                   />
@@ -241,7 +258,7 @@ const CreateInvoice = () => {
                   </label>
                   <textarea
                     rows={3}
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Payment terms and conditions"
                     {...register('terms')}
                   />
@@ -262,7 +279,7 @@ const CreateInvoice = () => {
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     {...register('date', { required: 'Invoice date is required' })}
                   />
                 </div>
@@ -272,7 +289,7 @@ const CreateInvoice = () => {
                   </label>
                   <input
                     type="date"
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     {...register('dueDate', { required: 'Due date is required' })}
                   />
                 </div>
@@ -281,14 +298,16 @@ const CreateInvoice = () => {
                     Payment Method
                   </label>
                   <select
-                    className="w-full border border-gray-300 rounded-lg p-3"
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     {...register('paymentMethod')}
                   >
                     <option value="">Select payment method</option>
                     <option value="Credit Card">Credit Card</option>
                     <option value="PayPal">PayPal</option>
                     <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="UPI">UPI</option>
                     <option value="Cash">Cash</option>
+                    <option value="Cheque">Cheque</option>
                   </select>
                 </div>
               </div>
@@ -300,16 +319,16 @@ const CreateInvoice = () => {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">${totals.subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{formatCurrency(totals.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tax:</span>
-                  <span className="font-medium">${totals.tax.toFixed(2)}</span>
+                  <span className="text-gray-600">Tax (GST):</span>
+                  <span className="font-medium">{formatCurrency(totals.tax)}</span>
                 </div>
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Total:</span>
-                    <span className="text-2xl font-bold text-indigo-600">${totals.total.toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-indigo-600">{formatCurrency(totals.total)}</span>
                   </div>
                 </div>
               </div>
