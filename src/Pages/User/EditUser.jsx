@@ -15,6 +15,7 @@ import {
   X,
   Trash2
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 // Mock data for users
 const mockUsers = {
@@ -190,18 +191,47 @@ const EditUser = () => {
     
     // In a real app, you would save to an API here
     console.log('User updated:', updatedUser)
-    alert('User updated successfully!')
+    toast.success('User updated successfully!')
     navigate('/user')
   }
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      // In a real app, you would delete from API
-      console.log('User deleted:', user.id)
-      alert('User deleted successfully!')
-      navigate('/user')
-    }
-  }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete this user?</p>
+        <p className="text-sm text-gray-600">The user will be permanently removed from the system. This action cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              // In a real app, you would delete from API
+              console.log('User deleted:', user.id);
+              toast.success('User deleted successfully!');
+              navigate('/user');
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '320px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
+  };
 
   if (isLoading) {
     return (

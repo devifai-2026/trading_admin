@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit, Trash2, Eye, Search, Filter, Calendar } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 // Mock database for blog posts
 const initialBlogPosts = [
@@ -135,18 +136,78 @@ const Blog = () => {
 
   // Handle delete
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this blog post?')) {
-      setBlogPosts(blogPosts.filter(post => post.id !== id))
-    }
-  }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete this post?</p>
+        <p className="text-sm text-gray-600">The blog post will be permanently removed. This action cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setBlogPosts(blogPosts.filter(post => post.id !== id));
+              toast.success('Post deleted successfully');
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '320px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
+  };
 
   // Handle bulk delete
   const handleBulkDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedPosts.length} post(s)?`)) {
-      setBlogPosts(blogPosts.filter(post => !selectedPosts.includes(post.id)))
-      setSelectedPosts([])
-    }
-  }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete {selectedPosts.length} posts?</p>
+        <p className="text-sm text-gray-600">All selected posts will be permanently removed. This action cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setBlogPosts(blogPosts.filter(post => !selectedPosts.includes(post.id)));
+              setSelectedPosts([]);
+              toast.success(`${selectedPosts.length} posts deleted`);
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete All
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '320px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
+  };
 
   // Handle bulk status change
   const handleBulkStatusChange = (status) => {

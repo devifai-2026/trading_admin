@@ -19,6 +19,10 @@ import Course from './Pages/Course/Course'
 import AddCourse from './Pages/Course/AddCourse'
 import EditCourse from './Pages/Course/EditCourse'
 import ViewCourse from './Pages/Course/ViewCourse'
+import Trade from './Pages/Trade/Trade'
+import AddTrade from './Pages/Trade/AddTrade'
+import EditTrade from './Pages/Trade/EditTrade'
+import { Toaster } from 'react-hot-toast'
 
 // Dummy user credentials
 const DUMMY_CREDENTIALS = {
@@ -81,47 +85,53 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={
-          isTokenValid() ? (
-            <Navigate to="/" replace />
-          ) : (
-            <Login onLogin={handleLogin} />
-          )
-        } />
-        
-        <Route path="/" element={
-          isTokenValid() ? (
-            <DashboardLayout onLogout={handleLogout} userEmail={isAuthenticated.email} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }>
-          <Route index element={<Navigate to="/blog" replace />} />
-          <Route path="blog" element={<Blog />} />
-          <Route path="blog/create" element={<CreateBlog />} />
-          <Route path="blog/view/:id" element={<ViewBlog />} />
-          <Route path="blog/edit/:id" element={<EditBlog />} />
-          <Route path="package" element={<Package />} />
-          <Route path="package/add" element={<AddPackage />} />
-          <Route path="package/edit/:id" element={<EditPackage />} />
-          <Route path="user" element={<User />} />
-          <Route path="user/details/:id" element={<UserDetails />} />
-          <Route path="user/edit/:id" element={<EditUser />} />
-          <Route path="invoice" element={<Invoice />} />
-          <Route path="invoice/view/:id" element={<ViewInvoice />} />
-          <Route path="invoice/create" element={<CreateInvoice />} />
-          <Route path="course" element={<Course />} />
-          <Route path="course/add" element={<AddCourse />} />
-          <Route path="course/edit/:id" element={<EditCourse />} />
-          <Route path="course/view/:id" element={<ViewCourse />} />
-        </Route>
+    <>
+      <Toaster position="top-right" reverseOrder={false} />
+      <Router>
+        <Routes>
+          <Route path="/login" element={
+            isTokenValid() ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          } />
+          
+          <Route path="/" element={
+            isTokenValid() ? (
+              <DashboardLayout onLogout={handleLogout} userEmail={isAuthenticated.email} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }>
+            <Route index element={<Navigate to="/blog" replace />} />
+            <Route path="blog" element={<Blog />} />
+            <Route path="blog/create" element={<CreateBlog />} />
+            <Route path="blog/view/:id" element={<ViewBlog />} />
+            <Route path="blog/edit/:id" element={<EditBlog />} />
+            <Route path="package" element={<Package />} />
+            <Route path="package/add" element={<AddPackage />} />
+            <Route path="package/edit/:id" element={<EditPackage />} />
+            <Route path="user" element={<User />} />
+            <Route path="user/details/:id" element={<UserDetails />} />
+            <Route path="user/edit/:id" element={<EditUser />} />
+            <Route path="invoice" element={<Invoice />} />
+            <Route path="invoice/view/:id" element={<ViewInvoice />} />
+            <Route path="invoice/create" element={<CreateInvoice />} />
+            <Route path="course" element={<Course />} />
+            <Route path="course/add" element={<AddCourse />} />
+            <Route path="course/edit/:id" element={<EditCourse />} />
+            <Route path="course/view/:id" element={<ViewCourse />} />
+            <Route path="trade" element={<Trade />} />
+            <Route path="trade/add" element={<AddTrade />} />
+            <Route path="trade/edit/:id" element={<EditTrade />} />
+          </Route>
 
-        {/* Catch all route - redirect to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+          {/* Catch all route - redirect to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Router>
+    </>
   )
 }
 

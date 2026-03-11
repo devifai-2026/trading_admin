@@ -4,6 +4,7 @@ import {
   BookOpen, ArrowLeft, Plus, X, Upload, 
   IndianRupee, Video, Clock, Users, Check
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const AddCourse = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ const AddCourse = () => {
     };
 
     console.log('New Course:', newCourse);
-    alert('Course created successfully!');
+    toast.success('Course created successfully!');
     navigate('/course');
   };
 

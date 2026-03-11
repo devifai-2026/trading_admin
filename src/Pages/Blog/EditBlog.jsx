@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Upload, X, Trash2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 // Mock data - in real app, you would fetch from API
 const mockPosts = {
@@ -87,7 +88,7 @@ const EditBlog = () => {
     
     // In a real app, you would save to an API here
     console.log('Post updated:', updatedPost)
-    alert('Blog post updated successfully!')
+    toast.success('Blog post updated successfully!')
     navigate('/blog')
   }
 
