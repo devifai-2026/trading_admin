@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { UserCheck, UserX, Mail, Phone, Eye, Edit, Trash2, Search, Filter } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 // Mock data for users
 const initialUsers = [
@@ -83,10 +84,40 @@ const User = () => {
 
   // Handle delete
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(user => user.id !== id))
-    }
-  }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete this user?</p>
+        <p className="text-sm text-gray-600">The user will be permanently removed from the system. This cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setUsers(users.filter(user => user.id !== id));
+              toast.success('User deleted successfully');
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '320px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
+  };
 
   // Filter users based on search and filters
   const filteredUsers = users.filter(user => {

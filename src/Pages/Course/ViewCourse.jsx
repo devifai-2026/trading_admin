@@ -6,6 +6,7 @@ import {
   Download, Share2, BarChart, FileText, MessageCircle,
   Bookmark, ExternalLink
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ViewCourse = () => {
   const { id } = useParams();
@@ -94,7 +95,7 @@ By the end of this course, you'll be able to build scalable, production-ready Re
   };
 
   const handleEnroll = () => {
-    alert('Enrollment functionality would be implemented here!');
+    toast.info('Enrollment functionality would be implemented here!');
   };
 
   if (loading) {

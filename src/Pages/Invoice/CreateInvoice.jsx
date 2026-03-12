@@ -12,6 +12,7 @@ import {
   Calendar,
   IndianRupee
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const CreateInvoice = () => {
   const navigate = useNavigate()
@@ -79,7 +80,7 @@ const CreateInvoice = () => {
     }
     
     console.log('New invoice created:', newInvoice)
-    alert('Invoice created successfully!')
+    toast.success('Invoice created successfully!')
     navigate('/invoice')
   }
 

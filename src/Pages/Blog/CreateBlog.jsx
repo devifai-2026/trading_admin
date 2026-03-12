@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Save, Upload, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 const CreateBlog = () => {
   const navigate = useNavigate()
@@ -50,7 +51,7 @@ const CreateBlog = () => {
     
     // In a real app, you would save to an API here
     console.log('New post created:', newPost)
-    alert('Blog post created successfully!')
+    toast.success('Blog post created successfully!')
     navigate('/blog')
   }
 

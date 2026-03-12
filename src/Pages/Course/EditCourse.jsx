@@ -5,6 +5,7 @@ import {
   IndianRupee, Video, Clock, Users, Star, 
   Check, Calendar, Eye, Trash2
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const EditCourse = () => {
   const navigate = useNavigate();
@@ -100,16 +101,45 @@ const EditCourse = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Updated Course:', courseData);
-    alert('Course updated successfully!');
+    toast.success('Course updated successfully!');
     navigate('/course');
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-      console.log('Delete course:', id);
-      alert('Course deleted successfully!');
-      navigate('/course');
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete this course?</p>
+        <p className="text-sm text-gray-600">The course and all its modules will be permanently removed. This cannot be undone.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              console.log('Delete course:', id);
+              toast.success('Course deleted successfully!');
+              navigate('/course');
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '320px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
   };
 
   const formatCurrency = (amount) => {

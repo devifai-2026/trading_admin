@@ -1,45 +1,74 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package as PackageIcon } from 'lucide-react';
+import { ArrowLeft, Package as PackageIcon, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { createSubscription } from '../../services/subscriptionService';
+import toast from 'react-hot-toast';
 
 const AddPackage = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [packageData, setPackageData] = useState({
-    name: '',
+    name: '1 Month',
+    durationInMonths: 1,
     price: '',
-    users: '',
-    storage: '',
-    features: [''],
+    description: '',
+    isActive: true,
   });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setPackageData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    
+    setPackageData(prev => {
+      let val = value;
+      if (name === 'price' && type === 'number') {
+        // Remove any non-digit characters to prevent decimals
+        val = value.replace(/[^0-9]/g, '');
+      }
+      const newData = { ...prev, [name]: type === 'checkbox' ? checked : val };
+      
+      // Auto-sync duration if name is changed
+      if (name === 'name') {
+        if (value === '1 Month') newData.durationInMonths = 1;
+        if (value === '6 Months') newData.durationInMonths = 6;
+        if (value === '1 Year') newData.durationInMonths = 12;
+      }
+      
+      // Auto-sync name if duration is changed
+      if (name === 'durationInMonths') {
+        const months = parseInt(value);
+        newData.durationInMonths = months;
+        if (months === 1) newData.name = '1 Month';
+        if (months === 6) newData.name = '6 Months';
+        if (months === 12) newData.name = '1 Year';
+      }
+      
+      return newData;
+    });
   };
 
-  const handleFeatureChange = (index, value) => {
-    const newFeatures = [...packageData.features];
-    newFeatures[index] = value;
-    setPackageData(prev => ({ ...prev, features: newFeatures }));
-  };
-
-  const addFeature = () => {
-    setPackageData(prev => ({ ...prev, features: [...prev.features, ''] }));
-  };
-
-  const removeFeature = (index) => {
-    if (packageData.features.length > 1) {
-      const newFeatures = packageData.features.filter((_, i) => i !== index);
-      setPackageData(prev => ({ ...prev, features: newFeatures }));
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Package Data:', packageData);
-    // Add your API call here
-    alert('Package added successfully!');
-    navigate('/package');
+    
+    // Validate price
+    if (parseFloat(packageData.price) < 0) {
+      toast.error('Price cannot be negative');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await createSubscription(packageData);
+      if (response.success) {
+        toast.success('Package added successfully!');
+        navigate('/package');
+      } else {
+        toast.error(response.message || 'Failed to add package');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,17 +91,36 @@ const AddPackage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Package Name *
+                Plan Name *
               </label>
-              <input
-                type="text"
+              <select
                 name="name"
                 value={packageData.name}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., Basic Plan"
                 required
-              />
+              >
+                <option value="1 Month">1 Month</option>
+                <option value="6 Months">6 Months</option>
+                <option value="1 Year">1 Year</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Duration (Months) *
+              </label>
+              <select
+                name="durationInMonths"
+                value={packageData.durationInMonths}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              >
+                <option value={1}>1 Month</option>
+                <option value={6}>6 Months</option>
+                <option value={12}>12 Months</option>
+              </select>
             </div>
 
             <div>
@@ -82,82 +130,46 @@ const AddPackage = () => {
               <div className="relative">
                 <span className="absolute left-3 top-2 text-gray-500">₹</span>
                 <input
-                  type="text"
+                  type="number"
                   name="price"
                   value={packageData.price}
                   onChange={handleInputChange}
+                  min="0"
+                  step="1"
                   className="w-full pl-10 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., 799/month"
+                  placeholder="e.g., 799"
                   required
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Users *
-              </label>
+            <div className="flex items-center mt-8">
               <input
-                type="text"
-                name="users"
-                value={packageData.users}
+                type="checkbox"
+                id="isActive"
+                name="isActive"
+                checked={packageData.isActive}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., Up to 5 users"
-                required
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Storage *
+              <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                Active Plan
               </label>
-              <input
-                type="text"
-                name="storage"
-                value={packageData.storage}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="e.g., 10GB"
-                required
-              />
             </div>
           </div>
 
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Features *
-              </label>
-              <button
-                type="button"
-                onClick={addFeature}
-                className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors"
-              >
-                + Add Feature
-              </button>
-            </div>
-            
-            {packageData.features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2 mb-2">
-                <input
-                  type="text"
-                  value={feature}
-                  onChange={(e) => handleFeatureChange(index, e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="e.g., 24/7 Support"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => removeFeature(index)}
-                  className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                  disabled={packageData.features.length === 1}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={packageData.description}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Enter plan details..."
+            />
           </div>
 
           <div className="flex justify-end gap-4 pt-6 border-t">
@@ -170,8 +182,10 @@ const AddPackage = () => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              disabled={loading}
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
             >
+              {loading && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
               Create Package
             </button>
           </div>

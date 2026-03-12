@@ -1,71 +1,153 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package as PackageIcon, Star } from 'lucide-react';
+import { ArrowLeft, Package as PackageIcon, RefreshCw, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getSubscriptionById, updateSubscription, deleteSubscription } from '../../services/subscriptionService';
+import toast from 'react-hot-toast';
 
 const EditPackage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   
-  // Mock data - replace with actual API call
-  const mockPackage = {
-    id: 1,
-    name: 'Basic Plan',
-    price: '₹799/month',
-    users: 'Up to 5 users',
-    storage: '10GB',
-    features: ['Basic Support', 'Email Support']
-  };
-
-  const [packageData, setPackageData] = useState(mockPackage);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [packageData, setPackageData] = useState({
+    name: '',
+    durationInMonths: 1,
+    price: '',
+    description: '',
+    isActive: true,
+  });
 
   useEffect(() => {
-    // Fetch package data based on ID
-    // const fetchPackage = async () => {
-    //   const response = await fetch(`/api/packages/${id}`);
-    //   const data = await response.json();
-    //   setPackageData(data);
-    // };
-    // fetchPackage();
+    const fetchPackage = async () => {
+      try {
+        setLoading(true);
+        const response = await getSubscriptionById(id);
+        if (response.success) {
+          setPackageData(response.data);
+        } else {
+          toast.error(response.message || 'Failed to fetch package details');
+        }
+      } catch (err) {
+        toast.error(err.message || 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPackage();
   }, [id]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setPackageData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    
+    setPackageData(prev => {
+      let val = value;
+      if (name === 'price' && type === 'number') {
+        // Remove any non-digit characters to prevent decimals
+        val = value.replace(/[^0-9]/g, '');
+      }
+      const newData = { ...prev, [name]: type === 'checkbox' ? checked : val };
+      
+      // Auto-sync duration if name is changed
+      if (name === 'name') {
+        if (value === '1 Month') newData.durationInMonths = 1;
+        if (value === '6 Months') newData.durationInMonths = 6;
+        if (value === '1 Year') newData.durationInMonths = 12;
+      }
+      
+      // Auto-sync name if duration is changed
+      if (name === 'durationInMonths') {
+        const months = parseInt(value);
+        newData.durationInMonths = months;
+        if (months === 1) newData.name = '1 Month';
+        if (months === 6) newData.name = '6 Months';
+        if (months === 12) newData.name = '1 Year';
+      }
+      
+      return newData;
+    });
   };
 
-  const handleFeatureChange = (index, value) => {
-    const newFeatures = [...packageData.features];
-    newFeatures[index] = value;
-    setPackageData(prev => ({ ...prev, features: newFeatures }));
-  };
-
-  const addFeature = () => {
-    setPackageData(prev => ({ ...prev, features: [...prev.features, ''] }));
-  };
-
-  const removeFeature = (index) => {
-    if (packageData.features.length > 1) {
-      const newFeatures = packageData.features.filter((_, i) => i !== index);
-      setPackageData(prev => ({ ...prev, features: newFeatures }));
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Updated Package Data:', packageData);
-    // Add your update API call here
-    alert('Package updated successfully!');
-    navigate('/package');
+
+    // Validate price
+    if (parseFloat(packageData.price) < 0) {
+      toast.error('Price cannot be negative');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const response = await updateSubscription(id, packageData);
+      if (response.success) {
+        toast.success('Package updated successfully!');
+        navigate('/package');
+      } else {
+        toast.error(response.message || 'Failed to update package');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Something went wrong');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this package?')) {
-      console.log('Delete package:', id);
-      // Add your delete API call here
-      alert('Package deleted successfully!');
-      navigate('/package');
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="font-semibold text-gray-800">Delete this package?</p>
+        <p className="text-sm text-gray-600">This will permanently remove the subscription plan. Existing subscribers will not be affected until their plan expires.</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                setSaving(true);
+                const response = await deleteSubscription(id);
+                if (response.success) {
+                  toast.success('Package deleted successfully!');
+                  navigate('/package');
+                } else {
+                  toast.error(response.message || 'Failed to delete package');
+                }
+              } catch (err) {
+                toast.error(err.message || 'Something went wrong');
+              } finally {
+                setSaving(false);
+              }
+            }}
+            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 6000,
+      position: 'top-center',
+      style: {
+        minWidth: '350px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '1px solid #fee2e2'
+      }
+    });
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[95%] mx-auto">
@@ -84,8 +166,9 @@ const EditPackage = () => {
         </div>
         <button
           onClick={handleDelete}
-          className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+          className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center"
         >
+          <Trash2 className="h-4 w-4 mr-2" />
           Delete Package
         </button>
       </div>
@@ -97,16 +180,36 @@ const EditPackage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Package Name *
+                    Plan Name *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="name"
                     value={packageData.name}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     required
-                  />
+                  >
+                    <option value="1 Month">1 Month</option>
+                    <option value="6 Months">6 Months</option>
+                    <option value="1 Year">1 Year</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (Months) *
+                  </label>
+                  <select
+                    name="durationInMonths"
+                    value={packageData.durationInMonths}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    required
+                  >
+                    <option value={1}>1 Month</option>
+                    <option value={6}>6 Months</option>
+                    <option value={12}>12 Months</option>
+                  </select>
                 </div>
 
                 <div>
@@ -116,78 +219,44 @@ const EditPackage = () => {
                   <div className="relative">
                     <span className="absolute left-3 top-2 text-gray-500">₹</span>
                     <input
-                      type="text"
+                      type="number"
                       name="price"
                       value={packageData.price}
                       onChange={handleInputChange}
+                      min="0"
+                      step="1"
                       className="w-full pl-10 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       required
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Users *
-                  </label>
+                <div className="flex items-center mt-8">
                   <input
-                    type="text"
-                    name="users"
-                    value={packageData.users}
+                    type="checkbox"
+                    id="isActive"
+                    name="isActive"
+                    checked={packageData.isActive}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    required
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Storage *
+                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                    Active Plan
                   </label>
-                  <input
-                    type="text"
-                    name="storage"
-                    value={packageData.storage}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    required
-                  />
                 </div>
               </div>
 
               <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Features *
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addFeature}
-                    className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors"
-                  >
-                    + Add Feature
-                  </button>
-                </div>
-                
-                {packageData.features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <input
-                      type="text"
-                      value={feature}
-                      onChange={(e) => handleFeatureChange(index, e.target.value)}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(index)}
-                      className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                      disabled={packageData.features.length === 1}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={packageData.description}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
               </div>
 
               <div className="flex justify-end gap-4 pt-6 border-t">
@@ -200,8 +269,10 @@ const EditPackage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  disabled={saving}
+                  className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center"
                 >
+                  {saving && <RefreshCw className="h-4 w-4 mr-2 animate-spin" />}
                   Update Package
                 </button>
               </div>
@@ -219,22 +290,13 @@ const EditPackage = () => {
             </div>
             
             <div className="mb-4">
-              <span className="text-2xl font-bold text-gray-900">{packageData.price}</span>
+              <span className="text-2xl font-bold text-gray-900">₹{packageData.price}</span>
+              <span className="text-gray-500 ml-1">/ {packageData.durationInMonths} Months</span>
             </div>
             
-            <ul className="mb-4 space-y-2">
-              <li className="flex items-center text-gray-600 text-sm">
-                <span className="mr-2">👤</span> {packageData.users}
-              </li>
-              <li className="flex items-center text-gray-600 text-sm">
-                <span className="mr-2">💾</span> {packageData.storage} Storage
-              </li>
-              {packageData.features.map((feature, index) => (
-                <li key={index} className="flex items-center text-gray-600 text-sm">
-                  <Star className="h-3 w-3 text-green-500 mr-2" /> {feature}
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm text-gray-600 mb-4">
+              {packageData.description || 'No description provided.'}
+            </p>
             
             <button className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
               Select Plan

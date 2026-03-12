@@ -12,7 +12,8 @@ import {
   Bell,
   UserCircle,
   LogOut,
-  BookOpen  // Added BookOpen icon
+  BookOpen,
+  TrendingUp
 } from 'lucide-react'
 
 const DashboardLayout = ({ onLogout }) => {
@@ -24,7 +25,8 @@ const DashboardLayout = ({ onLogout }) => {
     { name: 'Package', href: '/package', icon: Package },
     { name: 'User', href: '/user', icon: Users },
     { name: 'Invoice', href: '/invoice', icon: Receipt },
-    { name: 'Course', href: '/course', icon: BookOpen }, // Changed from Receipt to BookOpen
+    { name: 'Course', href: '/course', icon: BookOpen },
+    { name: 'Trade', href: '/trade', icon: TrendingUp },
   ]
 
   const handleLogout = () => {
