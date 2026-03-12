@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, TrendingUp, Save, RefreshCw, Info, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Save, RefreshCw, Info, AlertTriangle, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createTrade } from '../../services/tradeService';
 import toast from 'react-hot-toast';
@@ -14,6 +14,7 @@ const AddTrade = () => {
     category: 'Cash',
     subCategory: 'Intraday',
     transactionType: 'Buy',
+    status: 'OPEN',
     remarks: '',
     shortDescription: ''
   });
@@ -109,6 +110,38 @@ const AddTrade = () => {
                   onChange={handleInputChange}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+              <MessageSquare className="h-5 w-5 mr-2 text-indigo-600" />
+              Initial Trade Status
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {[
+                { val: 'OPEN', label: 'OPEN', color: 'bg-blue-600 text-white border-blue-600' },
+                { val: 'STOPLOSS_HIT', label: 'STOPLOSS HIT', color: 'bg-red-600 text-white border-red-600' },
+                { val: 'TARGET_1_DONE', label: 'TARGET 1', color: 'bg-green-600 text-white border-green-600' },
+                { val: 'TARGET_2_DONE', label: 'TARGET 2', color: 'bg-green-700 text-white border-green-700' },
+                { val: 'PROFITABLE', label: 'PROFITABLE', color: 'bg-emerald-600 text-white border-emerald-600' },
+                { val: 'LEVEL_NOT_COME', label: 'LEVEL NOT COME', color: 'bg-gray-600 text-white border-gray-600' }
+              ].map((status) => (
+                <button
+                  key={status.val}
+                  type="button"
+                  onClick={() => setFormData(p => ({...p, status: status.val}))}
+                  className={`p-2.5 rounded-lg border text-xs font-bold transition-all shadow-sm ${formData.status === status.val ? status.color : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-300'}`}
+                >
+                  {status.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-2">
+              <Info className="h-4 w-4 text-yellow-600 mt-0.5" />
+              <p className="text-xs text-yellow-800">
+                Setting an initial status will be included in the notification sent to users.
+              </p>
             </div>
           </div>
 
