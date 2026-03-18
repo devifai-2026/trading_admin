@@ -22,6 +22,8 @@ import ViewCourse from './Pages/Course/ViewCourse'
 import Trade from './Pages/Trade/Trade'
 import AddTrade from './Pages/Trade/AddTrade'
 import EditTrade from './Pages/Trade/EditTrade'
+import Polls from './Pages/Poll/Polls'
+import AddPoll from './Pages/Poll/AddPoll'
 import { Toaster } from 'react-hot-toast'
 
 // Dummy user credentials
@@ -125,6 +127,8 @@ function App() {
             <Route path="trade" element={<Trade />} />
             <Route path="trade/add" element={<AddTrade />} />
             <Route path="trade/edit/:id" element={<EditTrade />} />
+            <Route path="polls" element={<Polls />} />
+            <Route path="polls/add" element={<AddPoll />} />
           </Route>
 
           {/* Catch all route - redirect to login */}

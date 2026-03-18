@@ -13,7 +13,8 @@ import {
   UserCircle,
   LogOut,
   BookOpen,
-  TrendingUp
+  TrendingUp,
+  BarChart2
 } from 'lucide-react'
 
 const DashboardLayout = ({ onLogout }) => {
@@ -27,6 +28,7 @@ const DashboardLayout = ({ onLogout }) => {
     { name: 'Invoice', href: '/invoice', icon: Receipt },
     { name: 'Course', href: '/course', icon: BookOpen },
     { name: 'Trade', href: '/trade', icon: TrendingUp },
+    { name: 'Polls', href: '/polls', icon: BarChart2 },
   ]
 
   const handleLogout = () => {

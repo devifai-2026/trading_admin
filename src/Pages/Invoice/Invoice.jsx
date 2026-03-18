@@ -1,148 +1,62 @@
 import { useState, useEffect } from 'react'
-import { Download, Eye, Printer, Plus, Search, Filter, Calendar, FileText, Mail, Phone, Trash2 } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
+import { FileText, Calendar, BarChart2, Search } from 'lucide-react'
+import invoiceService from '../../services/invoiceService'
 
-// Mock data for invoices
-const initialInvoices = [
-  { 
-    id: 'INV-001', 
-    date: '2024-01-15', 
-    dueDate: '2024-02-15',
-    customer: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+1 234 567 890',
-      address: '123 Main St, New York, NY 10001'
-    },
-    items: [
-      { description: 'Enterprise Plan - Monthly', quantity: 1, price: 8299 },
-      { description: 'Additional Storage (50GB)', quantity: 2, price: 499 }
-    ],
-    subtotal: 9297,
-    tax: 929.70,
-    total: 10226.70,
-    status: 'Paid',
-    paymentMethod: 'Credit Card',
-    notes: 'Thank you for your business!'
-  },
-  { 
-    id: 'INV-002', 
-    date: '2024-01-14', 
-    dueDate: '2024-02-14',
-    customer: {
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+1 234 567 891',
-      address: '456 Oak Ave, San Francisco, CA 94107'
-    },
-    items: [
-      { description: 'Pro Plan - Monthly', quantity: 1, price: 2499 }
-    ],
-    subtotal: 2499,
-    tax: 249.90,
-    total: 2748.90,
-    status: 'Pending',
-    paymentMethod: 'PayPal',
-    notes: 'Please make payment within 30 days'
-  },
-  { 
-    id: 'INV-003', 
-    date: '2024-01-13', 
-    dueDate: '2024-02-13',
-    customer: {
-      name: 'Acme Corp',
-      email: 'billing@acme.com',
-      phone: '+1 234 567 892',
-      address: '789 Corporate Blvd, Chicago, IL 60601'
-    },
-    items: [
-      { description: 'Enterprise Plan - Yearly', quantity: 1, price: 82990 },
-      { description: 'Premium Support', quantity: 1, price: 9999 },
-      { description: 'Custom Domain', quantity: 2, price: 1199 }
-    ],
-    subtotal: 95387,
-    tax: 9538.70,
-    total: 104925.70,
-    status: 'Paid',
-    paymentMethod: 'Bank Transfer',
-    notes: 'Corporate discount applied'
-  },
-  { 
-    id: 'INV-004', 
-    date: '2024-01-12', 
-    dueDate: '2024-02-12',
-    customer: {
-      name: 'Tech Solutions',
-      email: 'accounts@techsolutions.com',
-      phone: '+1 234 567 893',
-      address: '321 Tech Park, Austin, TX 78701'
-    },
-    items: [
-      { description: 'Pro Plan - Yearly', quantity: 1, price: 24990 },
-      { description: 'Additional Users (5)', quantity: 1, price: 2499 }
-    ],
-    subtotal: 27489,
-    tax: 2748.90,
-    total: 30237.90,
-    status: 'Overdue',
-    paymentMethod: 'Credit Card',
-    notes: 'Payment reminder sent'
-  },
-  { 
-    id: 'INV-005', 
-    date: '2024-01-11', 
-    dueDate: '2024-02-11',
-    customer: {
-      name: 'Digital Agency Inc',
-      email: 'finance@digitalagency.com',
-      phone: '+1 234 567 894',
-      address: '654 Design Blvd, Miami, FL 33101'
-    },
-    items: [
-      { description: 'Basic Plan - Monthly', quantity: 3, price: 799 }
-    ],
-    subtotal: 2397,
-    tax: 239.70,
-    total: 2636.70,
-    status: 'Draft',
-    paymentMethod: '',
-    notes: 'Invoice in draft mode'
-  },
-]
-
-// Helper function to format numbers as Indian currency
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount)
 }
 
-// Helper function to get rupee symbol
-const getRupeeSymbol = () => {
-  return '₹'
-}
+const getRupeeSymbol = () => '₹'
 
 const Invoice = () => {
-  const [invoices, setInvoices] = useState(initialInvoices)
-  const [filteredInvoices, setFilteredInvoices] = useState(initialInvoices)
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterDate, setFilterDate] = useState('all')
+  const [filteredInvoices, setFilteredInvoices] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 })
 
-  // Calculate stats
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true)
+      const params = {
+        page: pagination.page,
+        limit: pagination.limit,
+        status: filterStatus === 'all' ? undefined : filterStatus.toLowerCase(),
+        search: searchTerm || undefined
+      }
+      const response = await invoiceService.getAllInvoices(params)
+      if (response.success) {
+        setInvoices(response.data.invoices)
+        setPagination(response.data.pagination)
+      }
+    } catch (error) {
+      toast.error('Error fetching invoices')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchInvoices()
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm, filterStatus, pagination.page])
+
   const stats = {
-    total: invoices.length,
-    paid: invoices.filter(inv => inv.status === 'Paid').length,
-    pending: invoices.filter(inv => inv.status === 'Pending').length,
-    overdue: invoices.filter(inv => inv.status === 'Overdue').length,
-    draft: invoices.filter(inv => inv.status === 'Draft').length,
-    totalRevenue: invoices.reduce((sum, inv) => sum + inv.total, 0)
+    total: pagination.total,
+    paid: invoices.filter(inv => inv.status === 'paid').length,
+    pending: invoices.filter(inv => inv.status === 'pending').length,
+    failed: invoices.filter(inv => inv.status === 'failed').length,
+    totalRevenue: invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0)
   }
 
   // Filter invoices
@@ -152,9 +66,9 @@ const Invoice = () => {
     // Apply search filter
     if (searchTerm) {
       result = result.filter(invoice =>
-        invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        invoice.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+        invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.user_id?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        invoice.user_id?.email?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
@@ -166,11 +80,11 @@ const Invoice = () => {
     // Apply date filter
     if (filterDate !== 'all') {
       const today = new Date()
-      const last30Days = new Date(today.setDate(today.getDate() - 30))
-      const last90Days = new Date(today.setDate(today.getDate() - 60)) // Already subtracted 30
+      const last30Days = new Date(new Date().setDate(today.getDate() - 30))
+      const last90Days = new Date(new Date().setDate(today.getDate() - 90))
 
       result = result.filter(invoice => {
-        const invoiceDate = new Date(invoice.date)
+        const invoiceDate = new Date(invoice.payment_date)
         switch (filterDate) {
           case 'today':
             return invoiceDate.toDateString() === new Date().toDateString()
@@ -188,77 +102,36 @@ const Invoice = () => {
 
     setFilteredInvoices(result)
   }, [searchTerm, filterStatus, filterDate, invoices])
-
-  // Handle delete click
-  const handleDeleteClick = (invoice) => {
-    toast((t) => (
-      <div className="flex flex-col gap-3 p-1">
-        <p className="font-semibold text-gray-800">Delete Invoice {invoice.id}?</p>
-        <p className="text-sm text-gray-600">This will permanently remove the invoice record for {invoice.customer.name}. This cannot be undone.</p>
-        <div className="flex justify-end gap-2 mt-1">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              setInvoices(invoices.filter(inv => inv.id !== invoice.id));
-              toast.success('Invoice deleted successfully');
-            }}
-            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    ), {
-      duration: 6000,
-      position: 'top-center',
-      style: {
-        minWidth: '350px',
-        padding: '16px',
-        borderRadius: '12px',
-        border: '1px solid #fee2e2'
-      }
-    });
-  };
-
   // Handle download as PDF
   const handleDownloadPDF = (invoice) => {
-    // Create a temporary div for the invoice
     const invoiceDiv = document.createElement('div')
     invoiceDiv.style.position = 'absolute'
     invoiceDiv.style.left = '-9999px'
     invoiceDiv.innerHTML = `
-      <div id="invoice-pdf" style="width: 800px; padding: 40px; font-family: Arial, sans-serif;">
+      <div id="invoice-pdf" style="width: 800px; padding: 40px; font-family: Arial, sans-serif; background: white;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
           <div>
-            <h1 style="color: #4f46e5; font-size: 32px; margin: 0;">Invoice</h1>
-            <p style="color: #6b7280; margin: 5px 0;">${invoice.id}</p>
+            <h1 style="color: #4f46e5; font-size: 32px; margin: 0;">Tax Invoice</h1>
+            <p style="color: #6b7280; margin: 5px 0;">${invoice.invoice_number}</p>
           </div>
           <div style="text-align: right;">
-            <p style="margin: 5px 0;"><strong>Date:</strong> ${invoice.date}</p>
-            <p style="margin: 5px 0;"><strong>Due Date:</strong> ${invoice.dueDate}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date(invoice.payment_date).toLocaleDateString()}</p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> ${invoice.status.toUpperCase()}</p>
           </div>
         </div>
         
         <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
           <div>
-            <h3 style="margin-bottom: 10px;">From:</h3>
-            <p style="margin: 5px 0;"><strong>Your Company Name</strong></p>
-            <p style="margin: 5px 0;">123 Business Rd</p>
-            <p style="margin: 5px 0;">City, State 12345</p>
-            <p style="margin: 5px 0;">contact@company.com</p>
+            <h3 style="margin-bottom: 10px;">Company:</h3>
+            <p style="margin: 5px 0;"><strong>Trading Pro</strong></p>
+            <p style="margin: 5px 0;">Admin Office</p>
+            <p style="margin: 5px 0;">contact@tradingpro.com</p>
           </div>
           <div style="text-align: right;">
             <h3 style="margin-bottom: 10px;">Bill To:</h3>
-            <p style="margin: 5px 0;"><strong>${invoice.customer.name}</strong></p>
-            <p style="margin: 5px 0;">${invoice.customer.email}</p>
-            <p style="margin: 5px 0;">${invoice.customer.phone}</p>
-            <p style="margin: 5px 0;">${invoice.customer.address}</p>
+            <p style="margin: 5px 0;"><strong>${invoice.user_id?.name || 'Customer'}</strong></p>
+            <p style="margin: 5px 0;">${invoice.user_id?.email || ''}</p>
+            <p style="margin: 5px 0;">${invoice.user_id?.phone || ''}</p>
           </div>
         </div>
         
@@ -266,74 +139,42 @@ const Invoice = () => {
           <thead>
             <tr style="background-color: #f3f4f6;">
               <th style="padding: 12px; text-align: left; border: 1px solid #d1d5db;">Description</th>
-              <th style="padding: 12px; text-align: center; border: 1px solid #d1d5db;">Quantity</th>
               <th style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">Price</th>
-              <th style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">Amount</th>
+              <th style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">Total</th>
             </tr>
           </thead>
           <tbody>
-            ${invoice.items.map(item => `
-              <tr>
-                <td style="padding: 12px; border: 1px solid #d1d5db;">${item.description}</td>
-                <td style="padding: 12px; text-align: center; border: 1px solid #d1d5db;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${item.price.toFixed(2)}</td>
-                <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${(item.quantity * item.price).toFixed(2)}</td>
-              </tr>
-            `).join('')}
+            <tr>
+              <td style="padding: 12px; border: 1px solid #d1d5db;">${invoice.subscription_id?.name || 'Subscription Plan'}</td>
+              <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${invoice.amount.toFixed(2)}</td>
+              <td style="padding: 12px; text-align: right; border: 1px solid #d1d5db;">${getRupeeSymbol()}${invoice.amount.toFixed(2)}</td>
+            </tr>
           </tbody>
         </table>
         
         <div style="margin-left: auto; width: 300px;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Subtotal:</span>
-            <span>${getRupeeSymbol()}${invoice.subtotal.toFixed(2)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Tax:</span>
-            <span>${getRupeeSymbol()}${invoice.tax.toFixed(2)}</span>
-          </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px;">
-            <span>Total:</span>
-            <span>${getRupeeSymbol()}${invoice.total.toFixed(2)}</span>
+            <span>Grand Total:</span>
+            <span>${getRupeeSymbol()}${invoice.amount.toFixed(2)}</span>
           </div>
-          <div style="padding: 10px; background-color: ${invoice.status === 'Paid' ? '#d1fae5' : 
-          invoice.status === 'Pending' ? '#fef3c7' : 
-          invoice.status === 'Overdue' ? '#fee2e2' : '#f3f4f6'}; 
-          text-align: center; border-radius: 6px; margin-bottom: 20px;">
-            <strong>Status: ${invoice.status}</strong>
-          </div>
-          ${invoice.notes ? `<p><strong>Notes:</strong> ${invoice.notes}</p>` : ''}
+          <p style="font-size: 14px; color: #6b7280;">Payment ID: ${invoice.razorpay_payment_id}</p>
         </div>
         
         <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #d1d5db; color: #6b7280; font-size: 12px; text-align: center;">
-          <p>Thank you for your business!</p>
-          <p>If you have any questions, please contact us at contact@company.com</p>
+          <p>This is a computer-generated invoice.</p>
         </div>
       </div>
     `
-    
+
     document.body.appendChild(invoiceDiv)
-    
+
     html2canvas(invoiceDiv).then(canvas => {
       const imgData = canvas.toDataURL('image/png')
       const pdf = new jsPDF('p', 'mm', 'a4')
       const imgWidth = 210
-      const pageHeight = 295
       const imgHeight = canvas.height * imgWidth / canvas.width
-      let heightLeft = imgHeight
-      let position = 0
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight
-        pdf.addPage()
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
-      }
-
-      pdf.save(`${invoice.id}.pdf`)
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight)
+      pdf.save(`${invoice.invoice_number}.pdf`)
       document.body.removeChild(invoiceDiv)
     })
   }
@@ -342,108 +183,18 @@ const Invoice = () => {
   const handlePrint = (invoice) => {
     const printWindow = window.open('', '_blank')
     printWindow.document.write(`
-      <!DOCTYPE html>
       <html>
-      <head>
-        <title>${invoice.id} - Invoice</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          .invoice-header { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          .invoice-details { display: flex; justify-content: space-between; margin-bottom: 40px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th, td { padding: 12px; border: 1px solid #ddd; }
-          th { background-color: #f3f4f6; }
-          .total-section { margin-left: auto; width: 300px; }
-          .status { padding: 10px; text-align: center; border-radius: 6px; margin-bottom: 20px; }
-          .paid { background-color: #d1fae5; }
-          .pending { background-color: #fef3c7; }
-          .overdue { background-color: #fee2e2; }
-          .draft { background-color: #f3f4f6; }
-          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; text-align: center; }
-          @media print {
-            body { padding: 0; }
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-header">
-          <div>
-            <h1 style="color: #4f46e5;">Invoice</h1>
-            <p>${invoice.id}</p>
+        <head><title>Invoice ${invoice.invoice_number}</title></head>
+        <body onload="window.print();window.close()">
+          <div style="padding: 40px; font-family: sans-serif;">
+            <h1>Tax Invoice</h1>
+            <p>Invoice No: ${invoice.invoice_number}</p>
+            <p>Customer: ${invoice.user_id?.name}</p>
+            <p>Plan: ${invoice.subscription_id?.name}</p>
+            <p>Amount: ${getRupeeSymbol()}${invoice.amount}</p>
+            <p>Payment ID: ${invoice.razorpay_payment_id}</p>
           </div>
-          <div style="text-align: right;">
-            <p><strong>Date:</strong> ${invoice.date}</p>
-            <p><strong>Due Date:</strong> ${invoice.dueDate}</p>
-          </div>
-        </div>
-        
-        <div class="invoice-details">
-          <div>
-            <h3>From:</h3>
-            <p><strong>Your Company Name</strong></p>
-            <p>123 Business Rd</p>
-            <p>City, State 12345</p>
-            <p>contact@company.com</p>
-          </div>
-          <div style="text-align: right;">
-            <h3>Bill To:</h3>
-            <p><strong>${invoice.customer.name}</strong></p>
-            <p>${invoice.customer.email}</p>
-            <p>${invoice.customer.phone}</p>
-            <p>${invoice.customer.address}</p>
-          </div>
-        </div>
-        
-        <table>
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invoice.items.map(item => `
-              <tr>
-                <td>${item.description}</td>
-                <td style="text-align: center;">${item.quantity}</td>
-                <td style="text-align: right;">${getRupeeSymbol()}${item.price.toFixed(2)}</td>
-                <td style="text-align: right;">${getRupeeSymbol()}${(item.quantity * item.price).toFixed(2)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <div class="total-section">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Subtotal:</span>
-            <span>${getRupeeSymbol()}${invoice.subtotal.toFixed(2)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-            <span>Tax:</span>
-            <span>${getRupeeSymbol()}${invoice.tax.toFixed(2)}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 18px;">
-            <span>Total:</span>
-            <span>${getRupeeSymbol()}${invoice.total.toFixed(2)}</span>
-          </div>
-          <div class="status ${invoice.status.toLowerCase()}">
-            <strong>Status: ${invoice.status}</strong>
-          </div>
-          ${invoice.notes ? `<p><strong>Notes:</strong> ${invoice.notes}</p>` : ''}
-        </div>
-        
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>If you have any questions, please contact us at contact@company.com</p>
-        </div>
-        
-        <button class="no-print" onclick="window.print()" style="position: fixed; top: 20px; right: 20px; padding: 10px 20px; background-color: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer;">
-          Print Invoice
-        </button>
-      </body>
+        </body>
       </html>
     `)
     printWindow.document.close()
@@ -478,33 +229,11 @@ const Invoice = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-            </div>
-            <div className="bg-yellow-100 p-2 rounded-full">
-              <Filter className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-500">Overdue</p>
-              <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-            </div>
-            <div className="bg-red-100 p-2 rounded-full">
-              <Calendar className="h-6 w-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-500">Total Revenue</p>
+              <p className="text-sm text-gray-500">Revenue</p>
               <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.totalRevenue)}</p>
             </div>
             <div className="bg-purple-100 p-2 rounded-full">
-              <FileText className="h-6 w-6 text-purple-600" />
+              <BarChart2 className="h-6 w-6 text-purple-600" />
             </div>
           </div>
         </div>
@@ -515,15 +244,8 @@ const Invoice = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
-            <p className="text-gray-500">Manage your invoices and payments</p>
+            <p className="text-gray-500">Real-time subscription invoices from backend</p>
           </div>
-          <Link
-            to="/invoice/create"
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Create Invoice
-          </Link>
         </div>
 
         {/* Filters */}
@@ -534,7 +256,7 @@ const Invoice = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search invoices..."
+                placeholder="Search invoice or ID..."
                 className="pl-10 w-full border border-gray-300 rounded-lg p-2"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -550,23 +272,22 @@ const Invoice = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
             >
               <option value="all">All Status</option>
-              <option value="Paid">Paid</option>
-              <option value="Pending">Pending</option>
-              <option value="Overdue">Overdue</option>
-              <option value="Draft">Draft</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
             <select
               className="w-full border border-gray-300 rounded-lg p-2"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
             >
-              <option value="all">All Dates</option>
+              <option value="all">All Time</option>
               <option value="today">Today</option>
-              <option value="week">Last 7 Days</option>
+              <option value="week">This Week</option>
               <option value="month">Last 30 Days</option>
               <option value="quarter">Last 90 Days</option>
             </select>
@@ -576,120 +297,100 @@ const Invoice = () => {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredInvoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 group">
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{invoice.id}</div>
-                    <div className="text-sm text-gray-500">{invoice.paymentMethod}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="font-medium text-gray-900">{invoice.customer.name}</div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Mail className="h-3 w-3 mr-1" /> {invoice.customer.email}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">{invoice.date}</td>
-                  <td className="px-6 py-4">
-                    <span className={`${new Date(invoice.dueDate) < new Date() ? 'text-red-600' : 'text-gray-500'}`}>
-                      {invoice.dueDate}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium">{formatCurrency(invoice.total)}</div>
-                    <div className="text-sm text-gray-500">
-                      {formatCurrency(invoice.subtotal)} + {formatCurrency(invoice.tax)} tax
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      invoice.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                      invoice.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                      invoice.status === 'Overdue' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {invoice.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <Link
-                        to={`/invoice/view/${invoice.id}`}
-                        className="text-blue-600 hover:text-blue-900 p-1"
-                        title="View"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </Link>
-                      <button
-                        onClick={() => handleDownloadPDF(invoice)}
-                        className="text-gray-600 hover:text-gray-900 p-1"
-                        title="Download PDF"
-                      >
-                        <Download className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handlePrint(invoice)}
-                        className="text-gray-600 hover:text-gray-900 p-1"
-                        title="Print"
-                      >
-                        <Printer className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(invoice)}
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice No</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredInvoices.map((invoice) => (
+                  <tr key={invoice._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{invoice.invoice_number}</div>
+                      <div className="text-xs text-gray-400">{invoice.razorpay_payment_id}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{invoice.user_id?.name || 'Deleted User'}</div>
+                      <div className="text-xs text-gray-500">{invoice.user_id?.email}</div>
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {new Date(invoice.payment_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 font-medium">
+                      {formatCurrency(invoice.amount)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                        invoice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                        {invoice.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex space-x-3">
+                        <button
+                          onClick={() => handleDownloadPDF(invoice)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                          title="Download PDF"
+                        >
+                          <Download className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handlePrint(invoice)}
+                          className="text-gray-600 hover:text-gray-900"
+                          title="Print"
+                        >
+                          <Printer className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Empty State */}
-      {filteredInvoices.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <Search className="h-12 w-12 mx-auto" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No invoices found</h3>
-          <p className="text-gray-500 mb-4">
-            {invoices.length === 0 
-              ? 'Start by creating your first invoice.' 
-              : 'Try adjusting your filters or search term.'}
-          </p>
-          {invoices.length === 0 && (
-            <Link
-              to="/invoice/create"
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+      {/* Pagination */}
+      {pagination.pages > 1 && (
+        <div className="flex justify-center space-x-2">
+          {Array.from({ length: pagination.pages }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setPagination({ ...pagination, page: i + 1 })}
+              className={`px-3 py-1 rounded ${pagination.page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 border'}`}
             >
-              <Plus className="h-5 w-5 mr-2" />
-              Create First Invoice
-            </Link>
-          )}
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && invoices.length === 0 && (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <Search className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">No invoices found</h3>
+          <p className="text-gray-500">Try adjusting your filters or wait for new subscriptions.</p>
         </div>
       )}
     </div>
   )
 }
+
 
 export default Invoice
