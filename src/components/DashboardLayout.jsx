@@ -1,10 +1,10 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Package, 
-  Users, 
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  LayoutDashboard,
+  FileText,
+  Package,
+  Users,
   Receipt,
   Menu,
   X,
@@ -14,27 +14,27 @@ import {
   LogOut,
   BookOpen,
   TrendingUp,
-  BarChart2
-} from 'lucide-react'
+  BarChart2,
+} from "lucide-react";
 
 const DashboardLayout = ({ onLogout }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
 
   const navigation = [
-    { name: 'Blog', href: '/blog', icon: FileText },
-    { name: 'Package', href: '/package', icon: Package },
-    { name: 'User', href: '/user', icon: Users },
-    { name: 'Invoice', href: '/invoice', icon: Receipt },
-    { name: 'Course', href: '/course', icon: BookOpen },
-    { name: 'Trade', href: '/trade', icon: TrendingUp },
-    { name: 'Polls', href: '/polls', icon: BarChart2 },
-  ]
+    // { name: "Blog", href: "/blog", icon: FileText },
+    { name: "Package", href: "/package", icon: Package },
+    { name: "User", href: "/user", icon: Users },
+    { name: "Invoice", href: "/invoice", icon: Receipt },
+    { name: "Course", href: "/course", icon: BookOpen },
+    { name: "Trade", href: "/trade", icon: TrendingUp },
+    { name: "Polls", href: "/polls", icon: BarChart2 },
+  ];
 
   const handleLogout = () => {
-    onLogout()
-    navigate('/login')
-  }
+    onLogout();
+    navigate("/login");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,38 +50,33 @@ const DashboardLayout = ({ onLogout }) => {
               >
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
-              
+
               <div className="flex items-center ml-4 lg:ml-0">
                 <LayoutDashboard className="h-8 w-8 text-indigo-600" />
-                <span className="ml-2 text-xl font-semibold text-gray-900">Blog Dashboard</span>
+                <span className="ml-2 text-xl font-semibold text-gray-900">
+                  Share Trade Point
+                </span>
               </div>
             </div>
 
             {/* Right section */}
             <div className="flex items-center space-x-4">
-              <div className="relative hidden md:block">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Search..."
-                />
-              </div>
+             
 
-              <button className="p-1 rounded-full text-gray-400 hover:text-gray-500">
+              {/* <button className="p-1 rounded-full text-gray-400 hover:text-gray-500">
                 <Bell className="h-6 w-6" />
-              </button>
+              </button> */}
 
               <div className="flex items-center">
                 <div className="flex items-center space-x-3 border-l border-gray-200 pl-4">
                   <UserCircle className="h-8 w-8 text-gray-400" />
                   <div className="hidden md:block">
-                    <p className="text-sm font-medium text-gray-700">Admin User</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Admin User
+                    </p>
                     <p className="text-xs text-gray-500">admin@example.com</p>
                   </div>
-                  
+
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
@@ -98,13 +93,17 @@ const DashboardLayout = ({ onLogout }) => {
       </header>
 
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-20 w-64 bg-white border-r border-gray-200 pt-16 lg:block lg:translate-x-0 transition-transform duration-300"
-           style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)' }}>
+      <div
+        className="fixed inset-y-0 left-0 z-20 w-64 bg-white border-r border-gray-200 pt-16 lg:block lg:translate-x-0 transition-transform duration-300"
+        style={{
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+        }}
+      >
         <div className="h-full overflow-y-auto">
           <nav className="px-4 py-6">
             <div className="space-y-1">
               {navigation.map((item) => {
-                const Icon = item.icon
+                const Icon = item.icon;
                 return (
                   <NavLink
                     key={item.name}
@@ -112,8 +111,8 @@ const DashboardLayout = ({ onLogout }) => {
                     className={({ isActive }) =>
                       `group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                         isActive
-                          ? 'bg-indigo-50 text-indigo-700'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }`
                     }
                     end
@@ -121,7 +120,7 @@ const DashboardLayout = ({ onLogout }) => {
                     <Icon className={`mr-3 h-5 w-5 flex-shrink-0`} />
                     {item.name}
                   </NavLink>
-                )
+                );
               })}
             </div>
           </nav>
@@ -129,7 +128,9 @@ const DashboardLayout = ({ onLogout }) => {
       </div>
 
       {/* Main content */}
-      <main className={`pt-16 transition-all duration-300 ${sidebarOpen ? 'lg:pl-64' : ''}`}>
+      <main
+        className={`pt-16 transition-all duration-300 ${sidebarOpen ? "lg:pl-64" : ""}`}
+      >
         <div className="px-4 sm:px-6 lg:px-8 py-8">
           <Outlet />
         </div>
@@ -143,7 +144,7 @@ const DashboardLayout = ({ onLogout }) => {
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DashboardLayout
+export default DashboardLayout;

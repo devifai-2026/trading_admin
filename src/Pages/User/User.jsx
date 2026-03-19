@@ -1,122 +1,54 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserCheck, UserX, Mail, Phone, Eye, Edit, Trash2, Search, Filter } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import userService from '../../services/userService'
 
-// Mock data for users
-const initialUsers = [
-  { 
-    id: 1, 
-    name: 'John Doe', 
-    email: 'john@example.com', 
-    phone: '+1 234 567 890', 
-    role: 'Admin', 
-    status: 'Active',
-    joinDate: '2024-01-15',
-    lastLogin: '2024-02-20',
-    package: 'Enterprise',
-    packageExpiry: '2024-12-31',
-    postsWritten: 45,
-    comments: 128,
-    bio: 'Senior developer with 8+ years of experience in web development.',
-    location: 'New York, USA',
-    website: 'https://johndoe.dev'
-  },
-  { 
-    id: 2, 
-    name: 'Jane Smith', 
-    email: 'jane@example.com', 
-    phone: '+1 234 567 891', 
-    role: 'Editor', 
-    status: 'Active',
-    joinDate: '2024-01-14',
-    lastLogin: '2024-02-19',
-    package: 'Pro Plan',
-    packageExpiry: '2024-11-30',
-    postsWritten: 23,
-    comments: 56,
-    bio: 'Content creator and technical writer specializing in frontend technologies.',
-    location: 'San Francisco, USA',
-    website: 'https://janesmith.blog'
-  },
-  { 
-    id: 3, 
-    name: 'Bob Johnson', 
-    email: 'bob@example.com', 
-    phone: '+1 234 567 892', 
-    role: 'Author', 
-    status: 'Inactive',
-    joinDate: '2024-01-13',
-    lastLogin: '2024-02-01',
-    package: 'Basic Plan',
-    packageExpiry: '2024-10-31',
-    postsWritten: 12,
-    comments: 34,
-    bio: 'Freelance writer focusing on technology tutorials and guides.',
-    location: 'Chicago, USA',
-    website: 'https://bobjohnson.com'
-  },
-  { 
-    id: 4, 
-    name: 'Alice Brown', 
-    email: 'alice@example.com', 
-    phone: '+1 234 567 893', 
-    role: 'Subscriber', 
-    status: 'Active',
-    joinDate: '2024-01-12',
-    lastLogin: '2024-02-18',
-    package: 'Pro Plan',
-    packageExpiry: '2024-09-30',
-    postsWritten: 0,
-    comments: 89,
-    bio: 'Digital marketing specialist interested in tech trends.',
-    location: 'Austin, USA',
-    website: 'https://alicebrown.digital'
-  },
-]
+// Native date formatter
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: '2-digit',
+  year: 'numeric',
+});
+
+
 
 const User = () => {
-  const [users, setUsers] = useState(initialUsers)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterRole, setFilterRole] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterPackage, setFilterPackage] = useState('all')
 
-  // Handle delete
-  const handleDelete = (id) => {
-    toast((t) => (
-      <div className="flex flex-col gap-3 p-1">
-        <p className="font-semibold text-gray-800">Delete this user?</p>
-        <p className="text-sm text-gray-600">The user will be permanently removed from the system. This cannot be undone.</p>
-        <div className="flex justify-end gap-2 mt-1">
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              toast.dismiss(t.id);
-              setUsers(users.filter(user => user.id !== id));
-              toast.success('User deleted successfully');
-            }}
-            className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors shadow-sm"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    ), {
-      duration: 6000,
-      position: 'top-center',
-      style: {
-        minWidth: '320px',
-        padding: '16px',
-        borderRadius: '12px',
-        border: '1px solid #fee2e2'
+  // Fetch users on mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await userService.getUsers();
+        if (response.success) {
+          setUsers(response.data);
+        } else {
+          toast.error(response.message || 'Failed to fetch users');
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error(error.message || 'Error connecting to server');
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+
+    fetchUsers();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return dateFormatter.format(new Date(dateString));
+    } catch (e) {
+      return 'N/A';
+    }
   };
 
   // Filter users based on search and filters
@@ -134,7 +66,9 @@ const User = () => {
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus
     
     // Package filter
-    const matchesPackage = filterPackage === 'all' || user.package === filterPackage
+    const matchesPackage = filterPackage === 'all' || 
+      (user.subscription?.name === filterPackage) || 
+      (filterPackage === 'None' && !user.subscription)
 
     return matchesSearch && matchesRole && matchesStatus && matchesPackage
   })
@@ -142,18 +76,18 @@ const User = () => {
   // Calculate stats
   const stats = {
     total: users.length,
-    active: users.filter(user => user.status === 'Active').length,
-    inactive: users.filter(user => user.status === 'Inactive').length,
-    admins: users.filter(user => user.role === 'Admin').length,
-    editors: users.filter(user => user.role === 'Editor').length,
-    authors: users.filter(user => user.role === 'Author').length,
-    subscribers: users.filter(user => user.role === 'Subscriber').length,
+    active: users.filter(user => user.isPhoneVerified).length,
+    inactive: users.filter(user => !user.isPhoneVerified).length,
+    admins: users.filter(user => user.role === 'admin').length,
+    editors: users.filter(user => user.role === 'editor').length,
+    authors: users.filter(user => user.role === 'author').length,
+    subscribers: users.filter(user => user.role === 'user').length,
   }
 
   // Get unique values for filters
-  const roles = ['all', ...new Set(users.map(user => user.role))]
-  const statuses = ['all', ...new Set(users.map(user => user.status))]
-  const packages = ['all', ...new Set(users.map(user => user.package))]
+  const roles = ['all', ...new Set(users.map(user => user.role || 'user'))]
+  const statuses = ['all', 'Verified', 'Unverified']
+  const packages = ['all', 'None', ...new Set(users.filter(u => u.subscription).map(user => user.subscription.name))]
 
   return (
     <div className="space-y-6">
@@ -291,12 +225,17 @@ const User = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Package</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
+                    Loading users...
+                  </td>
+                </tr>
+              ) : filteredUsers.map((user) => (
+                <tr key={user._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
@@ -308,7 +247,7 @@ const User = () => {
                       </div>
                       <div className="ml-4">
                         <div className="font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">Joined {user.joinDate}</div>
+                        <div className="text-sm text-gray-500">Joined {formatDate(user.createdAt)}</div>
                       </div>
                     </div>
                   </td>
@@ -324,61 +263,35 @@ const User = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      user.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
-                      user.role === 'Editor' ? 'bg-blue-100 text-blue-800' :
-                      user.role === 'Author' ? 'bg-green-100 text-green-800' :
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
+                      user.role === 'editor' ? 'bg-blue-100 text-blue-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {user.role}
+                      {user.role || 'user'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className={`text-sm font-medium ${
-                        user.package === 'Enterprise' ? 'text-purple-600' :
-                        user.package === 'Pro Plan' ? 'text-blue-600' :
-                        'text-green-600'
+                        user.isSubscribed ? 'text-purple-600' : 'text-gray-400'
                       }`}>
-                        {user.package}
+                        {user.subscription?.name || 'None'}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        Expires: {user.packageExpiry}
-                      </span>
+                      {user.isSubscribed && (
+                        <span className="text-xs text-gray-500">
+                          Expires: {formatDate(user.subscriptionExpiry)}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      user.status === 'Active' 
+                      user.isPhoneVerified 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {user.status}
+                      {user.isPhoneVerified ? 'Verified' : 'Unverified'}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <Link
-                        to={`/user/details/${user.id}`}
-                        className="text-blue-600 hover:text-blue-900 p-1"
-                        title="View Details"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </Link>
-                      <Link
-                        to={`/user/edit/${user.id}`}
-                        className="text-indigo-600 hover:text-indigo-900 p-1"
-                        title="Edit User"
-                      >
-                        <Edit className="h-5 w-5" />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Delete User"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}
